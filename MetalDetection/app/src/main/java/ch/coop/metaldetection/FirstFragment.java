@@ -1,5 +1,6 @@
 package ch.coop.metaldetection;
 
+import android.hardware.Sensor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,8 @@ public class FirstFragment extends Fragment {
     ) {
 
         binding = FragmentFirstBinding.inflate(inflater, container, false);
+        int magneticField = Sensor.TYPE_MAGNETIC_FIELD;
+
         return binding.getRoot();
 
     }
