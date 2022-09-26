@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;
 
+import androidx.cardview.widget.CardView;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private List<Word> words = new ArrayList<>();
     private List<Pair> pairs = new ArrayList<>();
     private Pair currentPair = new Pair();
+    private CardView currentCardView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +64,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
         updateRec();
-        words.add(new Word("Coop"));
+      /*  words.add(new Word("Coop"));
         words.add(new Word("Basel"));
         words.add(new Word("BBZBL"));
-        words.add(new Word("Pratteln"));
+        words.add(new Word("Pratteln"));*/
 
 
     }
@@ -131,8 +133,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (resultCode == RESULT_OK) {
             String logMsg = intent.getStringExtra("SCAN_RESULT");
             System.out.println(logMsg);
-            words.add(new Word(logMsg));
+            if (!words.stream().anyMatch(x -> x.getWord().equals(logMsg))) {
+                words.add(new Word(logMsg));
+                words.add(new Word(""));
+            } else {
+                words.add(new Word(logMsg));
+            }
             System.out.println(words);
+            if (currentCardView != null) {
+                MaterialButton button = (MaterialButton)    currentCardView.getChildAt(1);
+                button.setText(logMsg);
+            }
             updateRec();
         }
 
@@ -160,9 +171,10 @@ activity */, 2);
                     @Override
                     public void onItemClick(View view, int position) {
                         // TODO check if you really need to use type casting here
-                        MaterialButton materialButton = (MaterialButton) ((GridLayout) view).getChildAt(1);
-
-                        if (materialButton.isEnabled()) {
+                        CardView cardView = (CardView) ((GridLayout) view).getChildAt(0);
+                        launchScanner();
+                        currentCardView = cardView;
+                      /*  if (materialButton.isEnabled()) {
                             materialButton.setEnabled(false);
 
                             if (currentPair.isFull() || currentPair.getFirstWord() == null) {
@@ -179,7 +191,7 @@ activity */, 2);
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
-                        }
+                        }*/
                     }
 
                     @Override
