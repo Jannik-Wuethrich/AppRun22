@@ -2,6 +2,7 @@ package ch.coop.memory;
 
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 import com.google.zxing.client.android.Intents;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
@@ -45,6 +47,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private List<Pair> pairs = new ArrayList<>();
     private Pair currentPair = new Pair();
     private CardView currentCardView;
+    private String filename = "data.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +77,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 launchScanner();
             }
         });
+        try {
+
+            FileInputStream fin = openFileInput(filename);
+            int c;
+            String temp = "";
+
+            while ((c = fin.read()) != -1) {
+                temp = temp + Character.toString((char) c);
+            }
+            JSONObject x = new JSONObject(temp);
+            Gson gson = new Gson();
+            JSONModal abc = gson.fromJson(temp, JSONModal.class);
+            Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
+            for (Word word : abc.getResults()
+            ) {
+                words.add(word);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
         updateRec();
       /*  words.add(new Word("Coop"));
         words.add(new Word("Basel"));
@@ -104,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Toast.makeText(this, "Scanned: " + logMsg, Toast.LENGTH_LONG).show();
                     if (!words.stream().anyMatch(x -> x.getWord().equals(logMsg))) {
                         words.add(new Word(logMsg, bitmap));
+                        // words.add(new Word("", getBitmapFromURL("https://cdn4.vectorstock.com/i/thumb-large/19/58/no-image-vector-30371958.jpg")));
                     } else {
                         words.add(new Word(logMsg, bitmap));
                     }
@@ -111,6 +144,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     if (currentCardView != null) {
                         MaterialButton button = (MaterialButton) currentCardView.getChildAt(1);
                         button.setText(logMsg);
+                    }
+                    try {
+                        String filename = "data.json";
+                        JSONObject jsonObject = new JSONObject();
+                        JSONArray wordsArray = new JSONArray();
+                        for (Word word : words
+                        ) {
+                            JSONObject x = new JSONObject();
+                            x.put("word", word.getWord());
+                            x.put("image", word.getBitmap());
+                            wordsArray.put(x);
+                        }
+                        jsonObject.put("results", wordsArray);
+                        File filetoSave = new File(filename);
+                        FileOutputStream fOut = openFileOutput(filename, Context.MODE_PRIVATE);
+                        fOut.write(jsonObject.toString().getBytes());
+                        fOut.close();
+
+                        Toast.makeText(getBaseContext(), "file saved", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
                     }
                     updateRec();
                 }
@@ -227,4 +282,19 @@ activity */, 2);
         startActivity(intent);
     }
 
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
+        }
+
+    }
 }
