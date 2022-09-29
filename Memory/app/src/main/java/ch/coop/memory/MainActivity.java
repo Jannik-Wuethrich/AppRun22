@@ -22,6 +22,7 @@ import com.journeyapps.barcodescanner.ScanOptions;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Base64;
 import android.view.View;
 
 import androidx.cardview.widget.CardView;
@@ -46,6 +47,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -92,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
             for (Word word : abc.getResults()
             ) {
+                word.setBitmap(getBitmapFromString(word.getWord()));
                 words.add(word);
             }
         } catch (Exception e) {
@@ -153,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         ) {
                             JSONObject x = new JSONObject();
                             x.put("word", word.getWord());
-                            x.put("image", word.getBitmap());
+                            x.put("image", getStringFromBitmap(word.getBitmap()));
                             wordsArray.put(x);
                         }
                         jsonObject.put("results", wordsArray);
@@ -235,7 +238,7 @@ activity */, 2);
                         // TODO check if you really need to use type casting here
                         CardView cardView = (CardView) ((GridLayout) view).getChildAt(0);
                         launchScanner();
-                        currentCardView = cardView;
+                                               currentCardView = cardView;
                       /*  if (materialButton.isEnabled()) {
                             materialButton.setEnabled(false);
 
@@ -296,5 +299,22 @@ activity */, 2);
             return null;
         }
 
+    }
+
+    private String getStringFromBitmap(Bitmap bitmapPicture) {
+        final int COMPRESSION_QUALITY = 100;
+        String encodedImage;
+        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+        bitmapPicture.compress(Bitmap.CompressFormat.PNG, COMPRESSION_QUALITY,
+                byteArrayBitmapStream);
+        byte[] b = byteArrayBitmapStream.toByteArray();
+        encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
+        return encodedImage;
+    }
+
+    private Bitmap getBitmapFromString(String stringPicture) {
+        byte[] decodedString = Base64.decode(stringPicture, Base64.DEFAULT);
+        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        return decodedByte;
     }
 }
