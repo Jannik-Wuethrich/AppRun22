@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ public class WordsAdapter extends
         // for any view that will be set as you render a row
         // public TextView nameTextView;
         public Button messageButton;
+        public ImageView imageView;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
@@ -30,7 +32,7 @@ public class WordsAdapter extends
             // to access the context from any ViewHolder instance.
             super(itemView);
 
-            //   nameTextView = (TextView) itemView.findViewById(R.id.message_button);
+            imageView = (ImageView) itemView.findViewById(R.id.img);
             messageButton = (Button) itemView.findViewById(R.id.message_button);
         }
     }
@@ -55,7 +57,8 @@ public class WordsAdapter extends
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Word word = words.get(position);
-        //  TextView textView = holder.nameTextView;
+        ImageView imageView = holder.imageView;
+        imageView.setImageBitmap(word.getBitmap());
         Button button = holder.messageButton;
         button.setText(word.getWord());
     }

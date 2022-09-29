@@ -3,6 +3,8 @@ package ch.coop.memory;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -42,6 +44,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,8 +97,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         Toast.makeText(this, "No Permissions", Toast.LENGTH_LONG);
                     }
                 } else {
-                    String code = result.getContents();
-                    Toast.makeText(this, "Scanned: " + code, Toast.LENGTH_LONG).show();
+                    String logMsg = result.getContents();
+                    String path = result.getBarcodeImagePath();
+                    File file = new File(path);
+                    Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                    Toast.makeText(this, "Scanned: " + logMsg, Toast.LENGTH_LONG).show();
+                    if (!words.stream().anyMatch(x -> x.getWord().equals(logMsg))) {
+                        words.add(new Word(logMsg, bitmap));
+                    } else {
+                        words.add(new Word(logMsg, bitmap));
+                    }
+                    System.out.println(words);
+                    if (currentCardView != null) {
+                        MaterialButton button = (MaterialButton) currentCardView.getChildAt(1);
+                        button.setText(logMsg);
+                    }
+                    updateRec();
                 }
             });
 
@@ -127,28 +144,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return super.onCreateOptionsMenu(menu);
     }
 
-    @SuppressLint("MissingSuperCall")
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if (resultCode == RESULT_OK) {
-            String logMsg = intent.getStringExtra("SCAN_RESULT");
-            System.out.println(logMsg);
-            if (!words.stream().anyMatch(x -> x.getWord().equals(logMsg))) {
-                words.add(new Word(logMsg));
-                words.add(new Word(""));
-            } else {
-                words.add(new Word(logMsg));
+    /*
+        @SuppressLint("MissingSuperCall")
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+            if (resultCode == RESULT_OK) {
+                String logMsg = intent.getStringExtra("SCAN_RESULT");
+                System.out.println(logMsg);
+
             }
-            System.out.println(words);
-            if (currentCardView != null) {
-                MaterialButton button = (MaterialButton)    currentCardView.getChildAt(1);
-                button.setText(logMsg);
-            }
-            updateRec();
+
         }
-
-    }
-
+    */
     private void log(String solution) throws JSONException {
         Intent intent = new Intent("ch.apprun.intent.LOG");
 // format depends on app, see logbook format guideline
