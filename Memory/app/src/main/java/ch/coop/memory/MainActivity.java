@@ -271,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             log.put("solution", solutionArray);
             intent.putExtra("ch.apprun.logmessage", log.toString());
             startActivity(intent);
+            Toast.makeText(getBaseContext(), "Send successful", Toast.LENGTH_SHORT).show();
         } catch (JSONException e) {
             e.printStackTrace();
         }
