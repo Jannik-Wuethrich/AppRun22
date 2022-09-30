@@ -6,6 +6,7 @@ public class Word {
     private String word;
 private Bitmap bitmap;
 private String bitmapString;
+private int id;
     public Word(String word, Bitmap bitmap) {
         this.word = word;
         this.bitmap = bitmap;
@@ -33,5 +34,13 @@ private String bitmapString;
 
     public void setBitmapString(String bitmapString) {
         this.bitmapString = bitmapString;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }
