@@ -46,15 +46,18 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,27 +80,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 launchScanner();
             }
         });
+
+
+        FileInputStream fin = null;
         try {
+            fin = openFileInput(filename);
 
-            FileInputStream fin = openFileInput(filename);
-            int c;
-            String temp = "";
 
-            while ((c = fin.read()) != -1) {
-                temp = temp + Character.toString((char) c);
-            }
-            JSONObject x = new JSONObject(temp);
+
             Gson gson = new Gson();
-            JSONModal abc = gson.fromJson(temp, JSONModal.class);
+            JSONModal abc = gson.fromJson(readFileInputStream(fin), JSONModal.class);
             Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
             for (Word word : abc.getResults()
             ) {
                 words.add(word);
             }
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
         updateRec();
       /*  words.add(new Word("Coop"));
         words.add(new Word("Basel"));
@@ -296,5 +296,16 @@ activity */, 2);
             return null;
         }
 
+    }
+    private String readFileInputStream(FileInputStream fis) throws IOException {
+        StringBuilder tempBuilder = new StringBuilder();
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                tempBuilder.append(line);
+                tempBuilder.append("\n");
+            }
+        }
+        return tempBuilder.toString();
     }
 }
