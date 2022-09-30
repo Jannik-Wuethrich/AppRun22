@@ -22,6 +22,7 @@ import com.journeyapps.barcodescanner.ScanOptions;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Base64;
 import android.view.View;
 
 import androidx.cardview.widget.CardView;
@@ -47,6 +48,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -66,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private List<Pair> pairs = new ArrayList<>();
     private Pair currentPair = new Pair();
     private CardView currentCardView;
-    private String filename = "data.json";
+    private String filename = "data123.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,13 +89,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             fin = openFileInput(filename);
 
 
-
             Gson gson = new Gson();
             JSONModal abc = gson.fromJson(readFileInputStream(fin), JSONModal.class);
             Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
             for (Word word : abc.getResults()
             ) {
+                word.setBitmap(StringToBitMap(word.getBitmapString()));
                 words.add(word);
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -146,14 +149,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         button.setText(logMsg);
                     }
                     try {
-                        String filename = "data.json";
                         JSONObject jsonObject = new JSONObject();
                         JSONArray wordsArray = new JSONArray();
                         for (Word word : words
                         ) {
                             JSONObject x = new JSONObject();
                             x.put("word", word.getWord());
-                            x.put("image", word.getBitmap());
+                            x.put("bitmapString", BitMapToString(word.getBitmap()));
                             wordsArray.put(x);
                         }
                         jsonObject.put("results", wordsArray);
@@ -297,6 +299,7 @@ activity */, 2);
         }
 
     }
+
     private String readFileInputStream(FileInputStream fis) throws IOException {
         StringBuilder tempBuilder = new StringBuilder();
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
@@ -307,5 +310,24 @@ activity */, 2);
             }
         }
         return tempBuilder.toString();
+    }
+
+    public String BitMapToString(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] b = baos.toByteArray();
+        String temp = Base64.encodeToString(b, Base64.DEFAULT);
+        return temp;
+    }
+
+    public Bitmap StringToBitMap(String encodedString) {
+        try {
+            byte[] encodeByte = Base64.decode(encodedString, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+            return bitmap;
+        } catch (Exception e) {
+            e.getMessage();
+            return null;
+        }
     }
 }
