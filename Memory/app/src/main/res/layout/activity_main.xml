@@ -26,7 +26,7 @@
         android:layout_gravity="bottom|start"
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
-        app:srcCompat="@android:drawable/ic_input_get" />
+        app:srcCompat="@android:drawable/ic_dialog_email" />
 
 
 

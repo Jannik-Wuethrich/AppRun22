@@ -255,40 +255,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
         try {
-            JSONArray sol = new JSONArray();
+            JSONArray solutionArray = new JSONArray();
+
             for (Pair pair : pairs) {
-                JSONArray ar = new JSONArray();
-                ar.put(pair.getFirstWord().getWord());
-                ar.put(pair.getSecondWord().getWord());
-                sol.put(ar);
+                JSONArray pairArray = new JSONArray();
+                pairArray.put(pair.getFirstWord().getWord());
+                pairArray.put(pair.getSecondWord().getWord());
+                solutionArray.put(pairArray);
             }
+
             Intent intent = new Intent("ch.apprun.intent.LOG");
             // format depends on app, see logbook format guideline
             JSONObject log = new JSONObject();
             log.put("task", "Memory");
-            log.put("solution", sol);
+            log.put("solution", solutionArray);
             intent.putExtra("ch.apprun.logmessage", log.toString());
-            // TODO this throws an exception. check the format of the log string. probably not correct
             startActivity(intent);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-    }
-
-    public static Bitmap getBitmapFromURL(String src) {
-        try {
-            URL url = new URL(src);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoInput(true);
-            connection.connect();
-            InputStream input = connection.getInputStream();
-
-            return BitmapFactory.decodeStream(input);
-        } catch (IOException e) {
-            // Log exception
-            return null;
-        }
-
     }
 
     private String readFileInputStream(FileInputStream fis) throws IOException {
