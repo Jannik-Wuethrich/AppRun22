@@ -1,13 +1,14 @@
 package ch.coop.memory;
 
 public class JSONWord {
-    private int id;
 
-    public int getId() {
+    private String id;
+
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 }

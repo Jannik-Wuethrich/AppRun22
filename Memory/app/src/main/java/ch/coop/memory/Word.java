@@ -4,12 +4,14 @@ import android.graphics.Bitmap;
 
 public class Word {
     private String word;
-private Bitmap bitmap;
-private String bitmapString;
-private int id;
-    public Word(String word, Bitmap bitmap) {
+    private Bitmap bitmap;
+    private String bitmapString;
+    private String id;
+
+    public Word(String word, Bitmap bitmap, String id) {
         this.word = word;
         this.bitmap = bitmap;
+        this.id = id;
     }
 
     public String getWord() {
@@ -36,11 +38,11 @@ private int id;
         this.bitmapString = bitmapString;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 }
