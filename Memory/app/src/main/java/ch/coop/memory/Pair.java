@@ -4,7 +4,7 @@ public class Pair {
     private Word firstWord;
     private Word secondWord;
         private int id;
-        public Pair(int id){
+        public Pair(){
 
         }
     public Word getFirstWord() {
