@@ -98,9 +98,29 @@ public class MainActivity extends AppCompatActivity {
         myLocationOverlay.enableMyLocation();
         map.getOverlays().add(myLocationOverlay);
 
-        fusedLocationClient.getLocationAvailability();
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                System.out.println("Missing Permissions");
+                return;
+            }
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null)
+                    controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
 
-        Task<Location> locationTask = fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
+
+            });
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+/*        Task<Location> locationTask = fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
             @Override
             public boolean isCancellationRequested() {
                 return false;
@@ -111,8 +131,8 @@ public class MainActivity extends AppCompatActivity {
             public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
                 return null;
             }
-        });
-        LocationRequest locationRequestDistanceInterval = LocationRequest.create()
+        });*/
+      /*  LocationRequest locationRequestDistanceInterval = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setFastestInterval(0) // This MUST be set, otherwise no updates
                 .setSmallestDisplacement(1);
@@ -131,10 +151,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onLocationAvailability(LocationAvailability locationAvailability) {
-                              super.onLocationAvailability(locationAvailability);
+                super.onLocationAvailability(locationAvailability);
             }
-        };
-
+        };*/
 
       /*  fusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, new LocationListener()
         {
@@ -147,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
         });
         locationTask.addOnSuccessListener(location -> {
             controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-
         });*/
         /*.addOnSuccessListener(location -> {
             controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
@@ -155,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
