@@ -90,22 +90,23 @@ public class MainActivity extends AppCompatActivity {
         Configuration.getInstance()
                 .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         setContentView(R.layout.fragment_first);
-        MapView map = findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.MAPNIK);
-        map.setMaxZoomLevel(20.0);
-        map.setMultiTouchControls(true);
-        map.getZoomController()
-                .setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
-        IMapController controller = map.getController();
-        controller.setZoom(18.0);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
-        myLocationOverlay.enableMyLocation();
-        map.getOverlays().add(myLocationOverlay);
 
         try {
             if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                MapView map = findViewById(R.id.map);
+                map.setTileSource(TileSourceFactory.MAPNIK);
+                map.setMaxZoomLevel(20.0);
+                map.setMultiTouchControls(true);
+                map.getZoomController()
+                        .setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
+                IMapController controller = map.getController();
+                controller.setZoom(18.0);
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+                MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
+                myLocationOverlay.enableMyLocation();
+                map.getOverlays().add(myLocationOverlay);
 
                 // You can use the API that requires the permission.
                 Toast.makeText(ctx, "Already granted permission", Toast.LENGTH_SHORT);
