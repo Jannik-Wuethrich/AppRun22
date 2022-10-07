@@ -26,6 +26,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.view.View;
 
@@ -61,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private FusedLocationProviderClient fusedLocationClient;
 
+    private LocationCallback locationCallback;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,55 +94,35 @@ public class MainActivity extends AppCompatActivity {
                 .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         setContentView(R.layout.fragment_first);
 
+        MapView map = findViewById(R.id.map);
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMaxZoomLevel(20.0);
+        map.setMultiTouchControls(true);
+        map.getZoomController()
+                .setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
+        IMapController controller = map.getController();
+        controller.setZoom(18.0);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        try {
-            if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                MapView map = findViewById(R.id.map);
-                map.setTileSource(TileSourceFactory.MAPNIK);
-                map.setMaxZoomLevel(20.0);
-                map.setMultiTouchControls(true);
-                map.getZoomController()
-                        .setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
-                IMapController controller = map.getController();
-                controller.setZoom(18.0);
-                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
+        myLocationOverlay.enableMyLocation();
+        map.getOverlays().add(myLocationOverlay);
 
-                MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
-                myLocationOverlay.enableMyLocation();
-                map.getOverlays().add(myLocationOverlay);
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
 
-                // You can use the API that requires the permission.
-                Toast.makeText(ctx, "Already granted permission", Toast.LENGTH_SHORT);
-                //performAction(...);
-            } else {
-                // You can directly ask for the permission.
-                // The registered ActivityResultCallback gets the result of this request.
-                requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                for (Location location : locationResult.getLocations()) {
+                    Toast.makeText(getApplicationContext(), "Have some locations", Toast.LENGTH_LONG);
+                    // TODO update the focal point
+                    // Update UI with location data
+                    // ...
+                }
             }
-
-
-            /*
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                System.out.println("Missing Permissions");
-                return;
-            }
-            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-                if (location != null)
-                    controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-
-
-            });
-             */
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        };
 
 /*        Task<Location> locationTask = fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
             @Override
@@ -193,6 +176,38 @@ public class MainActivity extends AppCompatActivity {
         });*/
 
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(createLocationRequest(), locationCallback, Looper.getMainLooper());
+        } else {
+            // You can directly ask for the permission.
+            // The registered ActivityResultCallback gets the result of this request.
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
+    }
+
+    protected LocationRequest createLocationRequest() {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        return locationRequest;
     }
 
     // Register the permissions callback, which handles the user's response to the
