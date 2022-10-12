@@ -21,12 +21,7 @@
         android:theme="@style/Theme.TreasureMap"
         tools:targetApi="31">
 
-        <!-- Recommended for Android 9 (API level 28) and lower. -->
-        <!-- Required for Android 10 (API level 29) and higher. -->
-        <service
-            android:name="MyNavigationService"
-            android:foregroundServiceType="location">
-         </service>
+
 
         <activity
             android:name=".MainActivity"
