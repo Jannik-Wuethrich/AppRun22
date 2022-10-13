@@ -4,47 +4,31 @@ import static org.osmdroid.tileprovider.util.StorageUtils.getStorage;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.Bundle;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationAvailability;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.CancellationToken;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.OnTokenCanceledListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.view.View;
-
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.multidex.BuildConfig;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
-
-
-import ch.coop.treasuremap.databinding.ActivityMainBinding;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.multidex.BuildConfig;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.gson.Gson;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.config.IConfigurationProvider;
@@ -52,57 +36,67 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-import java.time.Duration;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import ch.coop.treasuremap.databinding.ActivityMainBinding;
+import ch.coop.treasuremap.modals.JSONModal;
+import ch.coop.treasuremap.modals.LocationModal;
 
 public class MainActivity extends AppCompatActivity {
 
-    private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
     private FusedLocationProviderClient fusedLocationClient;
-
+    private GeoPoint actualGeopoint;
     private LocationCallback locationCallback;
-
+    private final String filename = "data.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_main);
 
+
+        findViewById(R.id.send).setOnClickListener(view -> log());
         setSupportActionBar(binding.toolbar);
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-
-        binding.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
         IConfigurationProvider provider = Configuration.getInstance();
         provider.setUserAgentValue(BuildConfig.APPLICATION_ID);
         provider.setOsmdroidBasePath(getStorage());
         provider.setOsmdroidTileCache(getStorage());
+
         Context ctx = getApplicationContext();
         Configuration.getInstance()
                 .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        setContentView(R.layout.fragment_first);
 
         MapView map = findViewById(R.id.map);
+        findViewById(R.id.fab).setOnClickListener(view -> {
+            try {
+                saveLocationToJson(map);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMaxZoomLevel(20.0);
         map.setMultiTouchControls(true);
         map.getZoomController()
                 .setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
         IMapController controller = map.getController();
-        controller.setZoom(18.0);
+        controller.setZoom(15.0);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
@@ -115,69 +109,44 @@ public class MainActivity extends AppCompatActivity {
                 if (locationResult == null) {
                     return;
                 }
-
                 for (Location location : locationResult.getLocations()) {
-                    Toast.makeText(getApplicationContext(), "Have some locations", Toast.LENGTH_LONG);
-                    // TODO update the focal point
-                    // Update UI with location data
+                    Toast.makeText(getApplicationContext(), "Have some locations", Toast.LENGTH_LONG).show();
                     controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-                    // ...
+                    actualGeopoint = new GeoPoint(location.getLatitude(), location.getLongitude());
                 }
             }
         };
 
-/*        Task<Location> locationTask = fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
-            @Override
-            public boolean isCancellationRequested() {
-                return false;
+    }
+
+    private void saveLocationToJson(MapView mapView) throws IOException {
+        try (FileInputStream fin = openFileInput(filename)) {
+            addMarker(mapView);
+            Gson gson = new Gson();
+            JSONModal jsonModalFromJSONFile = gson.fromJson(readFileInputStream(fin), JSONModal.class);
+            if (jsonModalFromJSONFile == null) {
+                jsonModalFromJSONFile = new JSONModal();
             }
+            Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
+            List<LocationModal> oldLocations = jsonModalFromJSONFile.getLocations() != null ? jsonModalFromJSONFile.getLocations() : new ArrayList<>();
+            LocationModal newLocation = new LocationModal();
+            newLocation.setLatitude(actualGeopoint.getLatitudeE6());
+            newLocation.setLongitude(actualGeopoint.getLongitudeE6());
+            oldLocations.add(newLocation);
 
-            @NonNull
-            @Override
-            public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
-                return null;
-            }
-        });*/
-      /*  LocationRequest locationRequestDistanceInterval = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setFastestInterval(0) // This MUST be set, otherwise no updates
-                .setSmallestDisplacement(1);
+            JSONModal newLocations = new JSONModal();
+            newLocations.setLocations(oldLocations);
+            FileOutputStream fOut = openFileOutput(filename, Context.MODE_PRIVATE);
+            fOut.write(gson.toJson(newLocations).getBytes());
+            fOut.close();
+            Toast.makeText(getBaseContext(), "file saved", Toast.LENGTH_SHORT).show();
 
-        LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setInterval(10000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        LocationCallback mLocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
+        } catch (IOException e) {
+            e.printStackTrace();
+            File f = new File("/data/user/0/ch.coop.treasuremap/files/data.json");
+            f.createNewFile();
 
-                if (locationResult != null && !locationResult.getLocations().isEmpty())
-                    controller.setCenter(new GeoPoint(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude()));
-            }
-
-            @Override
-            public void onLocationAvailability(LocationAvailability locationAvailability) {
-                super.onLocationAvailability(locationAvailability);
-            }
-        };*/
-
-      /*  fusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, new LocationListener()
-        {
-            @Override
-            public void onLocationChanged(Location location) {
-                // Handle your Distance based updates
-                controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-
-            }
-        });
-        locationTask.addOnSuccessListener(location -> {
-            controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-        });*/
-        /*.addOnSuccessListener(location -> {
-            controller.setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-        });*/
-
-
+        }
     }
 
     @Override
@@ -208,14 +177,13 @@ public class MainActivity extends AppCompatActivity {
         locationRequest.setInterval(10000);
         locationRequest.setFastestInterval(5000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
         return locationRequest;
     }
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog. Save the return value, an instance of
     // ActivityResultLauncher, as an instance variable.
-    private ActivityResultLauncher<String> requestPermissionLauncher =
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     // Permission is granted. Continue the action or workflow in your
@@ -230,32 +198,58 @@ public class MainActivity extends AppCompatActivity {
             });
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    private String readFileInputStream(FileInputStream fis) throws IOException {
+        StringBuilder tempBuilder = new StringBuilder();
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                tempBuilder.append(line);
+                tempBuilder.append("\n");
+            }
         }
-
-        return super.onOptionsItemSelected(item);
+        fis.close();
+        return tempBuilder.toString();
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
+    private void log() {
+        try (FileInputStream fin = openFileInput(filename)) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("task", "Schatzkarte");
+            JSONArray jsonArray = new JSONArray();
+            Gson gson = new Gson();
+            JSONModal jsonModalFromJSONFile = gson.fromJson(readFileInputStream(fin), JSONModal.class);
+            if (jsonModalFromJSONFile == null) {
+                jsonModalFromJSONFile = new JSONModal();
+            }
+            Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
+            List<LocationModal> locations = jsonModalFromJSONFile.getLocations() != null ? jsonModalFromJSONFile.getLocations() : new ArrayList<>();
+            for (LocationModal location : locations
+            ) {
+                JSONObject locationJObject = new JSONObject();
+                locationJObject.put("lat", location.getLatitude());
+                locationJObject.put("lon", location.getLongitude());
+                jsonArray.put(locationJObject);
+            }
+            Intent intent = new Intent("ch.apprun.intent.LOG");
+            jsonObject.put("points", jsonArray);
+            intent.putExtra("ch.apprun.logmessage", jsonObject.toString());
+            startActivity(intent);
+            Toast.makeText(getBaseContext(), "Send successful", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private void addMarker(MapView mapView) {
+        Marker startMarker = new Marker(mapView);
+        startMarker.setPosition(actualGeopoint);
+        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        startMarker.setOnMarkerClickListener(this::removeMarker);
+        mapView.getOverlays().add(startMarker);
+    }
+
+    private boolean removeMarker(Marker marker, MapView mapView) {
+        mapView.getOverlays().remove(marker);
+        return true;
     }
 }
