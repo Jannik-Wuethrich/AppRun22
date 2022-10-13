@@ -4,9 +4,13 @@ import static org.osmdroid.tileprovider.util.StorageUtils.getStorage;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -16,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.multidex.BuildConfig;
@@ -70,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_main);
 
-
         findViewById(R.id.send).setOnClickListener(view -> log());
         setSupportActionBar(binding.toolbar);
 
@@ -110,7 +114,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-
     }
 
     private void saveLocationToJson(MapView mapView, Context ctx) {
@@ -240,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
         Marker startMarker = new Marker(mapView);
         startMarker.setPosition(actualGeopoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        startMarker.setOnMarkerClickListener(this::removeMarker);
+        startMarker.setOnMarkerClickListener(this::confirmDelete);
         mapView.getOverlays().add(startMarker);
     }
 
@@ -264,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
                 Marker startMarker = new Marker(mapView);
                 startMarker.setPosition(new GeoPoint(location.getLatitude(), location.getLongitude()));
                 startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                startMarker.setOnMarkerClickListener(this::removeMarker);
+                startMarker.setOnMarkerClickListener(this::confirmDelete);
                 mapView.getOverlays().add(startMarker);
             }
         } catch (IOException e) {
@@ -285,7 +288,6 @@ public class MainActivity extends AppCompatActivity {
                     .filter(locationModal -> locationModal.getLatitude() == marker.getPosition().getLatitudeE6()
                             && locationModal.getLongitude() == marker.getPosition().getLongitudeE6()).findFirst();
 
-
             locations.remove(locationToRemove.get());
             JSONModal newLocations = new JSONModal();
             newLocations.setLocations(locations);
@@ -296,5 +298,31 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean confirmDelete(Marker marker, MapView mapView) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+        alert.setTitle("Delete");
+        alert.setMessage("Are you sure you want to delete?");
+        alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                removeMarker(marker, mapView);
+            }
+        });
+
+        alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+
+            }
+        });
+
+        alert.show();
+        return true;
     }
 }
