@@ -49,6 +49,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import ch.coop.treasuremap.databinding.ActivityMainBinding;
 import ch.coop.treasuremap.modals.JSONModal;
@@ -79,22 +80,14 @@ public class MainActivity extends AppCompatActivity {
         provider.setOsmdroidTileCache(getStorage());
 
         Context ctx = getApplicationContext();
-        Configuration.getInstance()
-                .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
         MapView map = findViewById(R.id.map);
-        findViewById(R.id.fab).setOnClickListener(view -> {
-            try {
-                saveLocationToJson(map);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        findViewById(R.id.fab).setOnClickListener(view -> saveLocationToJson(map, ctx));
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMaxZoomLevel(20.0);
         map.setMultiTouchControls(true);
-        map.getZoomController()
-                .setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
+        map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
         IMapController controller = map.getController();
         controller.setZoom(15.0);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -103,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         myLocationOverlay.enableMyLocation();
         map.getOverlays().add(myLocationOverlay);
 
+        loadAllMarkersFromJSON(map);
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -119,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void saveLocationToJson(MapView mapView) throws IOException {
+    private void saveLocationToJson(MapView mapView, Context ctx) {
         try (FileInputStream fin = openFileInput(filename)) {
             addMarker(mapView);
             Gson gson = new Gson();
@@ -143,8 +137,12 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (IOException e) {
             e.printStackTrace();
-            File f = new File("/data/user/0/ch.coop.treasuremap/files/data.json");
-            f.createNewFile();
+            File f = new File(ctx.getApplicationInfo().dataDir + "/files/data.json");
+            try {
+                f.createNewFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
 
         }
     }
@@ -183,19 +181,18 @@ public class MainActivity extends AppCompatActivity {
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog. Save the return value, an instance of
     // ActivityResultLauncher, as an instance variable.
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
-                    // Permission is granted. Continue the action or workflow in your
-                    // app.
-                } else {
-                    // Explain to the user that the feature is unavailable because the
-                    // features requires a permission that the user has denied. At the
-                    // same time, respect the user's decision. Don't link to system
-                    // settings in an effort to convince the user to change their
-                    // decision.
-                }
-            });
+    private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+        if (isGranted) {
+            // Permission is granted. Continue the action or workflow in your
+            // app.
+        } else {
+            // Explain to the user that the feature is unavailable because the
+            // features requires a permission that the user has denied. At the
+            // same time, respect the user's decision. Don't link to system
+            // settings in an effort to convince the user to change their
+            // decision.
+        }
+    });
 
 
     private String readFileInputStream(FileInputStream fis) throws IOException {
@@ -223,8 +220,7 @@ public class MainActivity extends AppCompatActivity {
             }
             Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
             List<LocationModal> locations = jsonModalFromJSONFile.getLocations() != null ? jsonModalFromJSONFile.getLocations() : new ArrayList<>();
-            for (LocationModal location : locations
-            ) {
+            for (LocationModal location : locations) {
                 JSONObject locationJObject = new JSONObject();
                 locationJObject.put("lat", location.getLatitude());
                 locationJObject.put("lon", location.getLongitude());
@@ -250,6 +246,55 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean removeMarker(Marker marker, MapView mapView) {
         mapView.getOverlays().remove(marker);
+        removePoint(marker);
         return true;
+    }
+
+    private void loadAllMarkersFromJSON(MapView mapView) {
+        try (FileInputStream fin = openFileInput(filename)) {
+            Gson gson = new Gson();
+            JSONModal jsonModalFromJSONFile = gson.fromJson(readFileInputStream(fin), JSONModal.class);
+            if (jsonModalFromJSONFile == null) {
+                jsonModalFromJSONFile = new JSONModal();
+            }
+            Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
+            List<LocationModal> locations = jsonModalFromJSONFile.getLocations() != null ? jsonModalFromJSONFile.getLocations() : new ArrayList<>();
+            for (LocationModal location : locations
+            ) {
+                Marker startMarker = new Marker(mapView);
+                startMarker.setPosition(new GeoPoint(location.getLatitude(), location.getLongitude()));
+                startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                startMarker.setOnMarkerClickListener(this::removeMarker);
+                mapView.getOverlays().add(startMarker);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void removePoint(Marker marker) {
+        try (FileInputStream fin = openFileInput(filename)) {
+            Gson gson = new Gson();
+            JSONModal jsonModalFromJSONFile = gson.fromJson(readFileInputStream(fin), JSONModal.class);
+            if (jsonModalFromJSONFile == null) {
+                jsonModalFromJSONFile = new JSONModal();
+            }
+            Toast.makeText(getBaseContext(), "file read", Toast.LENGTH_SHORT).show();
+            List<LocationModal> locations = jsonModalFromJSONFile.getLocations() != null ? jsonModalFromJSONFile.getLocations() : new ArrayList<>();
+            Optional<LocationModal> locationToRemove = locations.stream()
+                    .filter(locationModal -> locationModal.getLatitude() == marker.getPosition().getLatitudeE6()
+                            && locationModal.getLongitude() == marker.getPosition().getLongitudeE6()).findFirst();
+
+
+            locations.remove(locationToRemove.get());
+            JSONModal newLocations = new JSONModal();
+            newLocations.setLocations(locations);
+            FileOutputStream fOut = openFileOutput(filename, Context.MODE_PRIVATE);
+            fOut.write(gson.toJson(newLocations).getBytes());
+            fOut.close();
+            Toast.makeText(getBaseContext(), "file saved", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
