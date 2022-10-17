@@ -13,7 +13,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -24,12 +23,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.multidex.BuildConfig;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -62,17 +63,16 @@ import ch.coop.treasuremap.modals.LocationModal;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
     private FusedLocationProviderClient fusedLocationClient;
     private GeoPoint actualGeopoint;
     private LocationCallback locationCallback;
-    private final String filename = "data.json";
+    private final static String filename = "data.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_main);
 
         findViewById(R.id.send).setOnClickListener(view -> log());
@@ -137,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
             fOut.write(gson.toJson(newLocations).getBytes());
             fOut.close();
             Toast.makeText(getBaseContext(), "file saved", Toast.LENGTH_SHORT).show();
-
         } catch (IOException e) {
             e.printStackTrace();
             File f = new File(ctx.getApplicationInfo().dataDir + "/files/data.json");
@@ -148,12 +147,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(createLocationRequest(), locationCallback, Looper.getMainLooper());
         } else {
@@ -177,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setInterval(10000);
         locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
         return locationRequest;
     }
 
@@ -304,23 +303,12 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
         alert.setTitle("Delete");
         alert.setMessage("Are you sure you want to delete?");
-        alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                removeMarker(marker, mapView);
-            }
+        alert.setPositiveButton("Yes", (dialog, which) -> {
+            dialog.dismiss();
+            removeMarker(marker, mapView);
         });
 
-        alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-
-            }
-        });
+        alert.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
 
         alert.show();
         return true;

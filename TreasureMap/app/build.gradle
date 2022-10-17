@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.preference:preference:1.1.1'
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation "androidx.multidex:multidex:2.0.1"
     implementation "com.google.android.gms:play-services-location:20.0.0"
