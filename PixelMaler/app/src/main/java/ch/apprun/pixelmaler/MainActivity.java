@@ -3,6 +3,7 @@ package ch.apprun.pixelmaler;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,7 +24,7 @@ public class MainActivity extends Activity {
             currentBrush.setImageDrawable(null);
             currentBrush = (ImageButton) view;
         }
-
+        drawingView.draw(new Canvas());
         drawingView.setErase(true);
     }
 

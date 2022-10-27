@@ -19,11 +19,13 @@ import android.view.View;
 public class DrawingView extends View {
 
     private static final int GRID_SIZE = 13;
+    private static final int GRID_COLUMNS = 11;
 
     private Path drawPath = new Path();
     private Paint drawPaint = new Paint();
     private Paint linePaint = new Paint();
     private boolean isErasing = false;
+    private Canvas currentCavas;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -49,9 +51,19 @@ public class DrawingView extends View {
         final int stepSizeY = (int) Math.ceil((double) maxY / GRID_SIZE);
 
         // TODO Zeichne das Gitter
+        int distance_width = getWidth() / GRID_COLUMNS;
+        int distance_height = getHeight() / GRID_COLUMNS;
+       for(int x = 1; x < GRID_COLUMNS + 1; x++){
 
+            canvas.drawLine(distance_width * x,0,distance_width * x,getHeight(), linePaint);
+        }
+        for(int x = 1; x < GRID_COLUMNS + 1; x++){
+
+            canvas.drawLine(0,distance_height * x,getWidth(),distance_height * x,  linePaint);
+        }
         // Zeichnet einen Pfad der dem Finger folgt
         canvas.drawPath(drawPath, drawPaint);
+        currentCavas = canvas;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -65,7 +77,8 @@ public class DrawingView extends View {
                 drawPath.moveTo(touchX, touchY);
 
                 // TODO wir müssen uns die berührten Punkte zwischenspeichern
-
+                drawPaint.getColor();
+                currentCavas.drawPaint(new Paint());
                 break;
             case MotionEvent.ACTION_MOVE:
                 drawPath.lineTo(touchX, touchY);
