@@ -2,15 +2,23 @@ package ch.apprun.pixelmaler;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+
+import ch.apprun.pixelmaler.model.PixelModel;
 
 /**
  * Die DrawingView ist für die Darstellung und Verwaltung der Zeichenfläche
@@ -18,14 +26,19 @@ import android.view.View;
  */
 public class DrawingView extends View {
 
-    private static final int GRID_SIZE = 13;
-    private static final int GRID_COLUMNS = 11;
+    private static final int GRID_ROWS = 13;
+    private static final int GRID_COLUMNS = 13;
+
+    private static final float GRID_STROKE_WIDTH = 1.0f;
+
+    private final PixelModel[][] canvasAsArray = new PixelModel[GRID_ROWS][GRID_COLUMNS];
 
     private Path drawPath = new Path();
     private Paint drawPaint = new Paint();
     private Paint linePaint = new Paint();
     private boolean isErasing = false;
-    private Canvas currentCavas;
+    private int stepSizeX = 0;
+    private int stepSizeY = 0;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -37,33 +50,47 @@ public class DrawingView extends View {
 
         linePaint.setColor(0xFF666666);
         linePaint.setAntiAlias(true);
-        linePaint.setStrokeWidth(1.0f);
+        linePaint.setStrokeWidth(GRID_STROKE_WIDTH);
         linePaint.setStyle(Paint.Style.STROKE);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        final int maxX = getWidth();
+        final int maxY = getHeight();
 
-        final int maxX = canvas.getWidth();
-        final int maxY = canvas.getHeight();
-
-        final int stepSizeX = (int) Math.ceil((double) maxX / GRID_SIZE);
-        final int stepSizeY = (int) Math.ceil((double) maxY / GRID_SIZE);
+        int gridAllocationSize = (int) (2 * GRID_STROKE_WIDTH);
+        stepSizeX = (int) (Math.ceil((double) maxX / GRID_ROWS) - gridAllocationSize);
+        stepSizeY = (int) (Math.ceil((double) maxY / GRID_ROWS) - gridAllocationSize);
 
         // TODO Zeichne das Gitter
         int distance_width = getWidth() / GRID_COLUMNS;
-        int distance_height = getHeight() / GRID_COLUMNS;
-       for(int x = 1; x < GRID_COLUMNS + 1; x++){
+        int distance_height = getHeight() / GRID_ROWS;
 
-            canvas.drawLine(distance_width * x,0,distance_width * x,getHeight(), linePaint);
+        // Draw Vertical Lines
+        for (int x = 0; x < GRID_COLUMNS + 1; x++) {
+            canvas.drawLine(distance_width * x + GRID_STROKE_WIDTH, 0, distance_width * x + GRID_STROKE_WIDTH, getHeight(), linePaint);
         }
-        for(int x = 1; x < GRID_COLUMNS + 1; x++){
 
-            canvas.drawLine(0,distance_height * x,getWidth(),distance_height * x,  linePaint);
+        // Draw Horizontal Lines
+        for (int y = 0; y < GRID_ROWS + 1; y++) {
+            canvas.drawLine(0, distance_height * y, getWidth(), distance_height * y, linePaint);
         }
         // Zeichnet einen Pfad der dem Finger folgt
         canvas.drawPath(drawPath, drawPaint);
-        currentCavas = canvas;
+
+        // TODO loop through array and draw rectangles if there are any
+        for (int row = 0; row < canvasAsArray.length; row++) {
+            for (int col = 0; col < canvasAsArray[row].length; col++) {
+                if (canvasAsArray[row][col] == null) {
+                } else {
+                    PixelModel pixelModel = canvasAsArray[row][col];
+                    canvas.drawRect(pixelModel.getRectangle(), pixelModel.getColor());
+                }
+            }
+        }
+
+
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -72,13 +99,26 @@ public class DrawingView extends View {
         float touchX = event.getX();
         float touchY = event.getY();
 
+        int left = (int) (Math.floor(touchX / stepSizeX) * stepSizeX);
+        int top =  (int) (Math.floor(touchY / stepSizeY) * stepSizeY);
+        int right = left + stepSizeX;
+        int bottom = top + stepSizeY;
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                drawPath.moveTo(touchX, touchY);
+                Rect rect = new Rect(left, top, right, bottom);
 
-                // TODO wir müssen uns die berührten Punkte zwischenspeichern
-                drawPaint.getColor();
-                currentCavas.drawPaint(new Paint());
+                Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(drawPaint.getColor());
+
+                // TODO calc array Position
+                int arrayPositionX = (int) Math.floor(touchX / stepSizeX);
+                int arrayPositionY = (int) Math.floor(touchY / stepSizeY);
+
+                // TODO before putting anything check if the position exists in array
+                canvasAsArray[arrayPositionX][arrayPositionY] = new PixelModel(rect, paint);
+
                 break;
             case MotionEvent.ACTION_MOVE:
                 drawPath.lineTo(touchX, touchY);
