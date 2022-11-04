@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,10 +13,18 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import ch.apprun.pixelmaler.model.PixelModel;
+
 public class MainActivity extends Activity {
 
     private DrawingView drawingView;
     private ImageButton currentBrush;
+    private static final int GRID_ROWS = 13;
+    private static final int GRID_COLUMNS = 13;
 
     public void eraseClicked(View view) {
         if (view != currentBrush) {
@@ -75,7 +84,11 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                onLogAction();
+                try {
+                    log();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 return false;
             }
         });
@@ -97,7 +110,41 @@ public class MainActivity extends Activity {
 
     private void onLogAction() {
         // TODO
+
         Toast.makeText(getApplicationContext(), "Test", Toast.LENGTH_LONG);
     }
 
+    public void log() throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        JSONArray pixels = new JSONArray();
+        PixelModel[][] canvasAsArray = drawingView.getCanvasAsArray();
+
+        for (int row = 0; row < canvasAsArray.length; row++) {
+            for (int col = 0; col < canvasAsArray[row].length; col++) {
+                if (canvasAsArray[row][col] == null) {
+                } else {
+                    PixelModel pixelModel = canvasAsArray[row][col];
+                    if (!Integer.toHexString(pixelModel.getColor().getColor()).equals("ffffffff")) {
+                        JSONObject jobject = new JSONObject();
+                        jobject.put("y", col);
+                        jobject.put("x", row);
+                        try {
+                            // TODO check color format
+                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()));
+                            pixels.put(jobject);
+                        } catch (Exception e) {
+                            System.out.println(e);
+                        }
+                    }
+                }
+            }
+        }
+        Intent intent = new Intent("ch.apprun.intent.LOG");
+        jsonObject.put("pixels", pixels);
+        intent.putExtra("ch.apprun.logmessage", jsonObject.toString());
+        startActivity(intent);
+        Toast.makeText(getBaseContext(), "Send successful", Toast.LENGTH_SHORT).show();
+
+
+    }
 }

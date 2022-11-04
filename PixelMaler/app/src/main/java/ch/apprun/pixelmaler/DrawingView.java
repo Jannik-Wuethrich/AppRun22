@@ -15,6 +15,10 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
@@ -67,18 +71,6 @@ public class DrawingView extends View {
         int distance_width = getWidth() / GRID_COLUMNS;
         int distance_height = getHeight() / GRID_ROWS;
 
-        // Draw Vertical Lines
-        for (int x = 0; x < GRID_COLUMNS + 1; x++) {
-            canvas.drawLine(distance_width * x + GRID_STROKE_WIDTH, 0, distance_width * x + GRID_STROKE_WIDTH, getHeight(), linePaint);
-        }
-
-        // Draw Horizontal Lines
-        for (int y = 0; y < GRID_ROWS + 1; y++) {
-            canvas.drawLine(0, distance_height * y, getWidth(), distance_height * y, linePaint);
-        }
-        // Zeichnet einen Pfad der dem Finger folgt
-        canvas.drawPath(drawPath, drawPaint);
-
         // TODO loop through array and draw rectangles if there are any
         for (int row = 0; row < canvasAsArray.length; row++) {
             for (int col = 0; col < canvasAsArray[row].length; col++) {
@@ -90,6 +82,28 @@ public class DrawingView extends View {
             }
         }
 
+        // Draw Vertical Lines
+        for (int x = 0; x < GRID_COLUMNS + 1; x++) {
+            if (x == 0) {
+                canvas.drawLine(0, 0, 0, getHeight(), linePaint);
+
+            } else {
+                canvas.drawLine(distance_width * x + GRID_STROKE_WIDTH, 0, distance_width * x + GRID_STROKE_WIDTH, getHeight(), linePaint);
+            }
+        }
+
+        // Draw Horizontal Lines
+        for (int y = 0; y < GRID_ROWS + 1; y++) {
+            if (y == 0) {
+                canvas.drawLine(0, 0, getWidth(), 0, linePaint);
+
+            } else {
+                canvas.drawLine(0, distance_height * y, getWidth(), distance_height * y, linePaint);
+            }
+        }
+        // Zeichnet einen Pfad der dem Finger folgt
+        canvas.drawPath(drawPath, drawPaint);
+
 
     }
 
@@ -99,8 +113,8 @@ public class DrawingView extends View {
         float touchX = event.getX();
         float touchY = event.getY();
 
-        int left = (int) (Math.floor(touchX / stepSizeX) * stepSizeX);
-        int top =  (int) (Math.floor(touchY / stepSizeY) * stepSizeY);
+        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX + GRID_STROKE_WIDTH) + 1);
+        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY + GRID_STROKE_WIDTH));
         int right = left + stepSizeX;
         int bottom = top + stepSizeY;
 
@@ -110,7 +124,12 @@ public class DrawingView extends View {
 
                 Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(drawPaint.getColor());
+                if (isErasing) {
+                    paint.setColor(Color.WHITE);
+                } else {
+                    paint.setColor(drawPaint.getColor());
+                }
+
 
                 // TODO calc array Position
                 int arrayPositionX = (int) Math.floor(touchX / stepSizeX);
@@ -165,5 +184,11 @@ public class DrawingView extends View {
     public void setColor(String color) {
         invalidate();
         drawPaint.setColor(Color.parseColor(color));
+    }
+
+
+
+    public PixelModel[][] getCanvasAsArray() {
+        return canvasAsArray;
     }
 }
