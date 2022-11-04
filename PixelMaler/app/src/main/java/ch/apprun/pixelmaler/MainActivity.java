@@ -142,6 +142,7 @@ public class MainActivity extends Activity {
         }
         Intent intent = new Intent("ch.apprun.intent.LOG");
         jsonObject.put("pixels", pixels);
+        jsonObject.put("task", "Pixelmaler");
         intent.putExtra("ch.apprun.logmessage", jsonObject.toString());
         startActivity(intent);
         Toast.makeText(getBaseContext(), "Send successful", Toast.LENGTH_SHORT).show();
