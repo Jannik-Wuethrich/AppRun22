@@ -7,10 +7,12 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -24,8 +26,8 @@ public class MainActivity extends Activity {
 
     private DrawingView drawingView;
     private ImageButton currentBrush;
-    private static final int GRID_ROWS = 13;
-    private static final int GRID_COLUMNS = 13;
+    private  int GRID_ROWS = 13;
+    private  int GRID_COLUMNS = GRID_ROWS;
 
     public void eraseClicked(View view) {
         if (view != currentBrush) {
@@ -42,12 +44,28 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        drawingView = (DrawingView) findViewById(R.id.drawing);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Grösse auswählen");
 
-        currentBrush = (ImageButton) findViewById(R.id.defaultColor);
-        currentBrush.setImageDrawable(getResources().getDrawable(R.drawable.selected));
-        String color = currentBrush.getTag().toString();
-        drawingView.setColor(color);
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+
+        builder.setPositiveButton("Weiter", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            GRID_ROWS = Integer.parseInt(input.getText().toString());
+            dialog.cancel();
+                drawingView = findViewById(R.id.drawing);
+                drawingView.setGridSize(GRID_ROWS);
+                currentBrush = findViewById(R.id.defaultColor);
+                currentBrush.setImageDrawable(getResources().getDrawable(R.drawable.selected));
+                String color = currentBrush.getTag().toString();
+                drawingView.setColor(color);
+
+            }
+        });
+
     }
 
     private void onCreateNewDrawingAction() {

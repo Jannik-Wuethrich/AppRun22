@@ -30,8 +30,8 @@ import ch.apprun.pixelmaler.model.PixelModel;
  */
 public class DrawingView extends View {
 
-    private static final int GRID_ROWS = 13;
-    private static final int GRID_COLUMNS = 13;
+    private  int GRID_ROWS = 13;
+    private  int GRID_COLUMNS = 13;
 
     private static final float GRID_STROKE_WIDTH = 1.0f;
 
@@ -74,8 +74,7 @@ public class DrawingView extends View {
         // TODO loop through array and draw rectangles if there are any
         for (int row = 0; row < canvasAsArray.length; row++) {
             for (int col = 0; col < canvasAsArray[row].length; col++) {
-                if (canvasAsArray[row][col] == null) {
-                } else {
+                if (canvasAsArray[row][col] != null) {
                     PixelModel pixelModel = canvasAsArray[row][col];
                     canvas.drawRect(pixelModel.getRectangle(), pixelModel.getColor());
                 }
@@ -187,8 +186,11 @@ public class DrawingView extends View {
     }
 
 
-
     public PixelModel[][] getCanvasAsArray() {
         return canvasAsArray;
+    }
+
+    public void setGridSize(int number){
+        GRID_ROWS = number;
     }
 }
