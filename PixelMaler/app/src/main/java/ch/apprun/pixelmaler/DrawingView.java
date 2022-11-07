@@ -189,7 +189,7 @@ public class DrawingView extends View {
     public void startNew() {
 
         // TODO Gitter löschen
-
+        canvasAsArray = new PixelModel[GRID_ROWS][GRID_COLUMNS];
         invalidate();
     }
 
