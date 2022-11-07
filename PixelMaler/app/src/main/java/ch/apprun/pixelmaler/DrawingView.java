@@ -218,6 +218,7 @@ public class DrawingView extends View {
 
     public void setGridSize(int number) {
         GRID_ROWS = number;
+        GRID_COLUMNS = number;
         canvasAsArray = new PixelModel[number][number];
     }
 }
