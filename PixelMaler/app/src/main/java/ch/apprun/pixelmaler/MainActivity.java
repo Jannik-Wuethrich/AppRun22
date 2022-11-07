@@ -51,18 +51,28 @@ public class MainActivity extends Activity {
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         builder.setView(input);
 
-        builder.setPositiveButton("Weiter", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Weiter", (dialog, which) -> {
+        GRID_ROWS = Integer.parseInt(input.getText().toString());
+        dialog.cancel();
+            drawingView = findViewById(R.id.drawing);
+            drawingView.setGridSize(GRID_ROWS);
+            currentBrush = findViewById(R.id.defaultColor);
+            currentBrush.setImageDrawable(getResources().getDrawable(R.drawable.selected));
+            String color = currentBrush.getTag().toString();
+            drawingView.setColor(color);
+
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-            GRID_ROWS = Integer.parseInt(input.getText().toString());
-            dialog.cancel();
+                dialog.cancel();
                 drawingView = findViewById(R.id.drawing);
-                drawingView.setGridSize(GRID_ROWS);
-                currentBrush = findViewById(R.id.defaultColor);
+                drawingView.setGridSize(13);
+
+                currentBrush = (ImageButton) findViewById(R.id.defaultColor);
                 currentBrush.setImageDrawable(getResources().getDrawable(R.drawable.selected));
                 String color = currentBrush.getTag().toString();
                 drawingView.setColor(color);
-
             }
         });
 
