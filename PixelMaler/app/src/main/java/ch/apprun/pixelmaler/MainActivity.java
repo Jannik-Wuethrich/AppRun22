@@ -7,10 +7,12 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -24,8 +26,9 @@ public class MainActivity extends Activity {
 
     private DrawingView drawingView;
     private ImageButton currentBrush;
-    private static final int GRID_ROWS = 13;
-    private static final int GRID_COLUMNS = 13;
+    private int popupGridSize = 13;
+    private   int GRID_ROWS = popupGridSize;
+    private   int GRID_COLUMNS = popupGridSize;
 
     public void eraseClicked(View view) {
         if (view != currentBrush) {
@@ -42,23 +45,42 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        drawingView = (DrawingView) findViewById(R.id.drawing);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Grösse bestimmen");
+
+        final EditText input = new EditText(this);
+
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+
+        builder.setPositiveButton("Weiter", (dialog, which) -> {
+            popupGridSize = Integer.parseInt(input.getText().toString());
+            dialog.cancel();
+            drawingView = findViewById(R.id.drawing);
+            drawingView.setGridSize(popupGridSize);
+
+            currentBrush = (ImageButton) findViewById(R.id.defaultColor);
+            currentBrush.setImageDrawable(getResources().getDrawable(R.drawable.selected));
+            String color = currentBrush.getTag().toString();
+            drawingView.setColor(color);
+        });
+        builder.show();
+       /* drawingView = (DrawingView) findViewById(R.id.drawing);
 
         currentBrush = (ImageButton) findViewById(R.id.defaultColor);
         currentBrush.setImageDrawable(getResources().getDrawable(R.drawable.selected));
         String color = currentBrush.getTag().toString();
-        drawingView.setColor(color);
+        drawingView.setColor(color);*/
     }
 
     private void onCreateNewDrawingAction() {
         AlertDialog.Builder newDialog = new AlertDialog.Builder(this);
         newDialog.setTitle("New Drawing");
         newDialog.setMessage("Start a new drawing?");
-        newDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                drawingView.startNew();
-                dialog.dismiss();
-            }
+        newDialog.setPositiveButton("Yes", (dialog, which) -> {
+            drawingView.startNew();
+            dialog.dismiss();
         });
         newDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {

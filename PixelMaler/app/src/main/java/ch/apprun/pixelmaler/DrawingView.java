@@ -14,6 +14,7 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,12 +31,13 @@ import ch.apprun.pixelmaler.model.PixelModel;
  */
 public class DrawingView extends View {
 
-    private static final int GRID_ROWS = 13;
-    private static final int GRID_COLUMNS = 13;
-
+    // private static final int GRID_ROWS = 13;
+    //private static final int GRID_COLUMNS = 13;
+    private int GRID_ROWS = 13;
+    private int GRID_COLUMNS = GRID_ROWS;
     private static final float GRID_STROKE_WIDTH = 1.0f;
 
-    private final PixelModel[][] canvasAsArray = new PixelModel[GRID_ROWS][GRID_COLUMNS];
+    private PixelModel[][] canvasAsArray = new PixelModel[GRID_ROWS][GRID_COLUMNS];
 
     private Path drawPath = new Path();
     private Paint drawPaint = new Paint();
@@ -113,16 +115,17 @@ public class DrawingView extends View {
         float touchX = event.getX();
         float touchY = event.getY();
 
-        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX + GRID_STROKE_WIDTH) + 1);
-        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY + GRID_STROKE_WIDTH));
+        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX + GRID_STROKE_WIDTH) + 5);
+        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY + GRID_STROKE_WIDTH) + touchY / stepSizeY);
         int right = left + stepSizeX;
         int bottom = top + stepSizeY;
-
+        Rect rect;
+        Paint paint;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                Rect rect = new Rect(left, top, right, bottom);
+                rect = new Rect(left, top, right, bottom);
 
-                Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                paint = new Paint(Paint.ANTI_ALIAS_FLAG);
                 paint.setStyle(Paint.Style.FILL);
                 if (isErasing) {
                     paint.setColor(Color.WHITE);
@@ -136,14 +139,36 @@ public class DrawingView extends View {
                 int arrayPositionY = (int) Math.floor(touchY / stepSizeY);
 
                 // TODO before putting anything check if the position exists in array
-                canvasAsArray[arrayPositionX][arrayPositionY] = new PixelModel(rect, paint);
-
+                if (canvasAsArray.length > arrayPositionX && canvasAsArray.length > arrayPositionY) {
+                    canvasAsArray[arrayPositionX][arrayPositionY] = new PixelModel(rect, paint);
+                } else {
+                    Toast.makeText(getContext(), "Fehler ", Toast.LENGTH_LONG);
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 drawPath.lineTo(touchX, touchY);
 
-                // TODO wir müssen uns die berührten Punkte zwischenspeichern
+                rect = new Rect(left, top, right, bottom);
 
+                paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                paint.setStyle(Paint.Style.FILL);
+                if (isErasing) {
+                    paint.setColor(Color.WHITE);
+                } else {
+                    paint.setColor(drawPaint.getColor());
+                }
+
+
+                // TODO calc array Position
+                arrayPositionX = (int) Math.floor(touchX / stepSizeX);
+                arrayPositionY = (int) Math.floor(touchY / stepSizeY);
+
+                // TODO before putting anything check if the position exists in array
+                if (canvasAsArray.length > arrayPositionX && canvasAsArray.length > arrayPositionY) {
+                    canvasAsArray[arrayPositionX][arrayPositionY] = new PixelModel(rect, paint);
+                } else {
+                    Toast.makeText(getContext(), "Fehler ", Toast.LENGTH_LONG);
+                }
                 break;
             case MotionEvent.ACTION_UP:
 
@@ -187,8 +212,12 @@ public class DrawingView extends View {
     }
 
 
-
     public PixelModel[][] getCanvasAsArray() {
         return canvasAsArray;
+    }
+
+    public void setGridSize(int number) {
+        GRID_ROWS = number;
+        canvasAsArray = new PixelModel[number][number];
     }
 }
