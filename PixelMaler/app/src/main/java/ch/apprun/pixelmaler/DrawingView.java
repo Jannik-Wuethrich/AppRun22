@@ -50,7 +50,7 @@ public class DrawingView extends View {
         super(context, attrs);
         drawPaint.setAntiAlias(true);
         drawPaint.setStrokeWidth(20);
-        drawPaint.setStyle(Paint.Style.STROKE);
+        drawPaint.setStyle(Paint.Style.FILL);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
 
@@ -65,9 +65,9 @@ public class DrawingView extends View {
         final int maxX = getWidth();
         final int maxY = getHeight();
 
-        int gridAllocationSize = (int) (2 * GRID_STROKE_WIDTH);
-        stepSizeX = (int) (Math.ceil((double) maxX / GRID_ROWS) - gridAllocationSize);
-        stepSizeY = (int) (Math.ceil((double) maxY / GRID_ROWS) - gridAllocationSize);
+
+        stepSizeX = (int) (Math.ceil((double) maxX / GRID_ROWS) );
+        stepSizeY = (int) (Math.ceil((double) maxY / GRID_ROWS) );
 
         // TODO Zeichne das Gitter
         int distance_width = getWidth() / GRID_COLUMNS;
@@ -90,7 +90,7 @@ public class DrawingView extends View {
                 canvas.drawLine(0, 0, 0, getHeight(), linePaint);
 
             } else {
-                canvas.drawLine(distance_width * x + GRID_STROKE_WIDTH, 0, distance_width * x + GRID_STROKE_WIDTH, getHeight(), linePaint);
+                canvas.drawLine(distance_width * x , 0, distance_width * x , getHeight(), linePaint);
             }
         }
 
@@ -115,8 +115,8 @@ public class DrawingView extends View {
         float touchX = event.getX();
         float touchY = event.getY();
 
-        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX + GRID_STROKE_WIDTH) + 2 );
-        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY + GRID_STROKE_WIDTH) );
+        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX ) );
+        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY ) );
         int right = left + stepSizeX;
         int bottom = top + stepSizeY;
         Rect rect;
@@ -183,6 +183,7 @@ public class DrawingView extends View {
         }
 
         invalidate();
+
         return true;
     }
 
