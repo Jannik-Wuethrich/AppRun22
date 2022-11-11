@@ -155,7 +155,8 @@ public class MainActivity extends Activity {
                         jobject.put("x", row);
                         try {
                             // TODO check color format
-                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
+                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()));
+                            //jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
                             pixels.put(jobject);
                         } catch (Exception e) {
                             System.out.println(e);
