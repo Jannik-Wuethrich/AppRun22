@@ -146,7 +146,7 @@ public class DrawingView extends View {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                drawPath.lineTo(touchX, touchY);
+             //   drawPath.lineTo(touchX, touchY);
 
                 rect = new Rect(left, top, right, bottom);
 
