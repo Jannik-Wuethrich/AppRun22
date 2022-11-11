@@ -20,6 +20,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
+
 import ch.apprun.pixelmaler.model.PixelModel;
 
 public class MainActivity extends Activity {
@@ -153,7 +155,7 @@ public class MainActivity extends Activity {
                         jobject.put("x", row);
                         try {
                             // TODO check color format
-                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()));
+                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
                             pixels.put(jobject);
                         } catch (Exception e) {
                             System.out.println(e);
