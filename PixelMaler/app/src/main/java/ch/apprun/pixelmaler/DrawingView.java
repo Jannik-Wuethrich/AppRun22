@@ -115,8 +115,8 @@ public class DrawingView extends View {
         float touchX = event.getX();
         float touchY = event.getY();
 
-        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX - 2));
-        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY - 2));
+        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX - 1));
+        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY - 1));
         int right = left + stepSizeX;
         int bottom = top + stepSizeY;
         Rect rect;
