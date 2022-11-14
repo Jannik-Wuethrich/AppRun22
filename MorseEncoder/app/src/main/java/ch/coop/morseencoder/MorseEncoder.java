@@ -48,18 +48,23 @@ public class MorseEncoder {
 
     public List<Primitive> textToCode(String text) throws Exception {
         List<Primitive> code = new ArrayList<>();
-
+        text = text.toUpperCase();
         for (int characterIndex = 0; characterIndex < text.length(); ++characterIndex) {
             char character = text.charAt(characterIndex);
 
-            Primitive[] symbol = characterToSymbol(character);
+            try {
+                Primitive[] symbol = characterToSymbol(character);
+                // add space between symbols if necessary
+                if (code.size() > 0 && code.get(code.size() - 1).isLightOn() && symbol[0].isLightOn()) {
+                    code.add(SYMBOL_GAP);
+                }
 
-            // add space between symbols if necessary
-            if (code.size() > 0 && code.get(code.size() - 1).isLightOn() && symbol[0].isLightOn()) {
-                code.add(SYMBOL_GAP);
+                code.addAll(Arrays.asList(symbol));
+            } catch (Exception e) {
+
             }
 
-            code.addAll(Arrays.asList(symbol));
+
         }
 
         return code;
