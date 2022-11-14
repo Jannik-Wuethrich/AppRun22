@@ -155,7 +155,8 @@ public class MainActivity extends Activity {
                         jobject.put("x", row);
                         try {
                             // TODO check color format
-                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
+                            jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()));
+                           // jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
                             pixels.put(jobject);
                         } catch (Exception e) {
                             System.out.println(e);
@@ -165,8 +166,9 @@ public class MainActivity extends Activity {
             }
         }
         Intent intent = new Intent("ch.apprun.intent.LOG");
-        jsonObject.put("pixels", pixels);
         jsonObject.put("task", "Pixelmaler");
+        jsonObject.put("pixels", pixels);
+
         intent.putExtra("ch.apprun.logmessage", jsonObject.toString());
         startActivity(intent);
         Toast.makeText(getBaseContext(), "Send successful", Toast.LENGTH_SHORT).show();

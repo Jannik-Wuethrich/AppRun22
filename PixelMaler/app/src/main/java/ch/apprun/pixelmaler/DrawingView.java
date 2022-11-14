@@ -66,8 +66,8 @@ public class DrawingView extends View {
         final int maxY = getHeight();
 
 
-        stepSizeX = (int) (Math.ceil((double) maxX / GRID_ROWS) );
-        stepSizeY = (int) (Math.ceil((double) maxY / GRID_ROWS) );
+        stepSizeX = (int) (Math.ceil((double) maxX / GRID_ROWS));
+        stepSizeY = (int) (Math.ceil((double) maxY / GRID_ROWS));
 
         // TODO Zeichne das Gitter
         int distance_width = getWidth() / GRID_COLUMNS;
@@ -90,7 +90,7 @@ public class DrawingView extends View {
                 canvas.drawLine(0, 0, 0, getHeight(), linePaint);
 
             } else {
-                canvas.drawLine(distance_width * x , 0, distance_width * x , getHeight(), linePaint);
+                canvas.drawLine(distance_width * x, 0, distance_width * x, getHeight(), linePaint);
             }
         }
 
@@ -115,8 +115,8 @@ public class DrawingView extends View {
         float touchX = event.getX();
         float touchY = event.getY();
 
-        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX ) );
-        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY ) );
+        int left = (int) (Math.floor(touchX / stepSizeX) * (stepSizeX - 1));
+        int top = (int) (Math.floor(touchY / stepSizeY) * (stepSizeY - 1));
         int right = left + stepSizeX;
         int bottom = top + stepSizeY;
         Rect rect;
@@ -146,7 +146,7 @@ public class DrawingView extends View {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-             //   drawPath.lineTo(touchX, touchY);
+                //   drawPath.lineTo(touchX, touchY);
 
                 rect = new Rect(left, top, right, bottom);
 
