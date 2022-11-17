@@ -29,8 +29,8 @@ public class MainActivity extends Activity {
     private DrawingView drawingView;
     private ImageButton currentBrush;
     private int popupGridSize = 13;
-    private   int GRID_ROWS = popupGridSize;
-    private   int GRID_COLUMNS = popupGridSize;
+    private int GRID_ROWS = popupGridSize;
+    private int GRID_COLUMNS = popupGridSize;
 
     public void eraseClicked(View view) {
         if (view != currentBrush) {
@@ -151,12 +151,12 @@ public class MainActivity extends Activity {
                     PixelModel pixelModel = canvasAsArray[row][col];
                     if (!Integer.toHexString(pixelModel.getColor().getColor()).equals("ffffffff")) {
                         JSONObject jobject = new JSONObject();
-                        jobject.put("y", col);
-                        jobject.put("x", row);
+                        jobject.put("y", col + "");
+                        jobject.put("x", row + "");
                         try {
                             // TODO check color format
                             jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()));
-                           // jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
+                            // jobject.put("color", "#" + Integer.toHexString(pixelModel.getColor().getColor()).substring(2).toUpperCase());
                             pixels.put(jobject);
                         } catch (Exception e) {
                             System.out.println(e);
