@@ -77,7 +77,7 @@
     <!--edit text to display output to the user.
         Edit text is used since the user can copy the
         text easily if he wants to-->
-    <View
+    <ch.coop.morseencoder.FlashView
         android:id="@+id/etoutput"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

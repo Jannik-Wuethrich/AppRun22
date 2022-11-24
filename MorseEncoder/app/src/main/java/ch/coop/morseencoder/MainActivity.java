@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     // initialize variables
     EditText etinput;
-    View etoutput;
+    FlashView etoutput;
     Button btnEncode,
             btnDecode,
             btnclear;
@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
         btnDecode = findViewById(R.id.btndecode);
         btnEncode = findViewById(R.id.btnencode);
         btnclear = findViewById(R.id.btnclear);
-
 
 
         btnEncode.setOnClickListener(v -> {
@@ -72,8 +71,16 @@ public class MainActivity extends AppCompatActivity {
                 List<Primitive> primitiveList = morseEncoder.textToCode(input);
                 for (Primitive primitiv : primitiveList) {
                     if (primitiv.isLightOn()) {
-                        // etoutput.setBackgroundColor(Color.WHITE);
-                       lightOn(primitiv.getSignalLengthInDits());
+                        //   etoutput.setBackgroundColor(Color.WHITE);
+                        //  lightOn(primitiv.getSignalLengthInDits());
+                        etoutput.setDuration(primitiv.getSignalLengthInDits());
+                        // etoutput.flashOn();
+                        etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
+                       Thread.sleep(primitiv.getSignalLengthInDits() * 500);
+                    etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.black));
+
+                        //   findViewById(R.layout.activity_main).invalidate();
+
                     } else {
                         Thread.sleep(primitiv.getSignalLengthInDits() * 500);
                     }
@@ -112,9 +119,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void lightOn(int dur ) throws InterruptedException {
+
+    private void lightOn(int dur) throws InterruptedException {
         etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
-        etoutput.postInvalidate();
+        // etoutput.postInvalidate();
+        //   etoutput.requestLayout();
         Thread.sleep(dur * 500);
         etoutput.setBackgroundResource(R.color.black);
 
