@@ -1,5 +1,6 @@
 package ch.coop.morseencoder;
 
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -76,8 +77,12 @@ public class MainActivity extends AppCompatActivity {
                         etoutput.setDuration(primitiv.getSignalLengthInDits());
                         // etoutput.flashOn();
                         etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
-                       Thread.sleep(primitiv.getSignalLengthInDits() * 500);
-                    etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.black));
+                        // etoutput.invalidate();
+                        Context context = this;
+                        new android.os.Handler().postDelayed(
+                                () -> etoutput.setBackgroundColor(ContextCompat.getColor(context, R.color.black)), 5000);
+                        //  Thread.sleep(primitiv.getSignalLengthInDits() * 500);
+                        etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.black));
 
                         //   findViewById(R.layout.activity_main).invalidate();
 
@@ -90,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
             }
             // to display the output
             // etoutput.setText(output);
+            //    etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.black));
+
         });
         btnclear.setOnClickListener(new View.OnClickListener() {
             @Override
