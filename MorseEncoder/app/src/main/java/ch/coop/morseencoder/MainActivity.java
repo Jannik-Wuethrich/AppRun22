@@ -1,139 +1,101 @@
 package ch.coop.morseencoder;
 
-import android.content.Context;
-import android.content.res.ColorStateList;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.view.View;
 
 import androidx.core.content.ContextCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
-import ch.coop.morseencoder.databinding.ActivityMainBinding;
-
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    // initialize variables
-    EditText etinput;
-    FlashView etoutput;
-    Button btnEncode,
-            btnDecode,
+    private EditText etinput;
+    private View etoutput;
+    private Button btnEncode,
+            btnLog,
             btnclear;
-    MorseEncoder morseEncoder;
+    private MorseEncoder morseEncoder;
+    private long system = SystemClock.uptimeMillis();
+    private long DIT_DURATION_MILLISECONDS = 500;
+    private Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         morseEncoder = new MorseEncoder();
-
-        // Assign variables
+        HandlerThread handlerThread = new HandlerThread("HandlerThread");
+        handlerThread.start();
+        handler = new Handler(handlerThread.getLooper());
         etinput = findViewById(R.id.etinput);
         etoutput = findViewById(R.id.etoutput);
-        btnDecode = findViewById(R.id.btndecode);
+        btnLog = findViewById(R.id.btnlog);
         btnEncode = findViewById(R.id.btnencode);
         btnclear = findViewById(R.id.btnclear);
-
-
         btnEncode.setOnClickListener(v -> {
-
-            // When button encode is clicked then the
-            // following lines inside this curly
-            // braces will be executed
-
-            // to get the input as string which the user wants to encode
-            String input = etinput.getText().toString();
-
-            String output = "";
-
-            // variable used to compute the output
-            // to get the length of the input string
-            int l = input.length();
-
-            // variables used in loops
-            int i, j;
-
             try {
-                List<Primitive> primitiveList = morseEncoder.textToCode(input);
-                for (Primitive primitiv : primitiveList) {
-                    if (primitiv.isLightOn()) {
-                        //   etoutput.setBackgroundColor(Color.WHITE);
-                        //  lightOn(primitiv.getSignalLengthInDits());
-                        etoutput.setDuration(primitiv.getSignalLengthInDits());
-                        // etoutput.flashOn();
-                        etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
-                        // etoutput.invalidate();
-                        Context context = this;
-                        new android.os.Handler().postDelayed(
-                                () -> etoutput.setBackgroundColor(ContextCompat.getColor(context, R.color.black)), 5000);
-                        //  Thread.sleep(primitiv.getSignalLengthInDits() * 500);
-                        etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.black));
-
-                        //   findViewById(R.layout.activity_main).invalidate();
-
-                    } else {
-                        Thread.sleep(primitiv.getSignalLengthInDits() * 500);
-                    }
-                }
+                morse(etinput.getText().toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            // to display the output
-            // etoutput.setText(output);
-            //    etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.black));
-
         });
         btnclear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // When button clear is clicked then the
-                // following lines inside this curly
-                // braces will be executed
-
-                // to clear the etinput
                 etinput.setText("");
-
-                // to clear etoutput
-                //   etoutput.setText("");
             }
         });
-        btnDecode.setOnClickListener(new View.OnClickListener() {
+        btnLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // When button decode is clicked then the
-                // following lines inside this curly
-                // braces will be executed
-
-                // to get the input given by the user as string
                 String input1 = etinput.getText().toString();
-
-
+                log(input1);
             }
         });
     }
 
-    private void lightOn(int dur) throws InterruptedException {
-        etoutput.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
-        // etoutput.postInvalidate();
-        //   etoutput.requestLayout();
-        Thread.sleep(dur * 500);
-        etoutput.setBackgroundResource(R.color.black);
 
+    private void morse(String word) throws Exception {
+        MorseEncoder morseEncoder = new MorseEncoder();
+        View v = findViewById(R.id.etoutput);
+        List<Primitive> code = morseEncoder.textToCode(word.toUpperCase());
+        for (Primitive p : code) {
+            if (p.isLightOn()) {
+                handler.post(new Morse(Color.WHITE, p.getSignalLengthInDits(), v));
+            } else {
+                handler.post(new Morse(Color.BLACK, p.getSignalLengthInDits(), v));
+            }
+        }
 
+    }
+
+    private void log(String solution) {
+        JSONObject jsonObject = new JSONObject();
+        Intent intent = new Intent("ch.apprun.intent.LOG");
+        try {
+            jsonObject.put("task", "Morseencoder");
+            jsonObject.put("solution", solution);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        intent.putExtra("ch.apprun.logmessage", jsonObject.toString());
+        startActivity(intent);
+        Toast.makeText(getBaseContext(), "Send successful", Toast.LENGTH_SHORT).show();
     }
 }
