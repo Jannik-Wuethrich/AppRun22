@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         for (Primitive p : code) {
             if (p.isLightOn()) {
                 handler.post(new Morse(Color.WHITE, p.getSignalLengthInDits(), v));
+                handler.post(new Morse(Color.BLACK, 0, v));
             } else {
                 handler.post(new Morse(Color.BLACK, p.getSignalLengthInDits(), v));
             }
